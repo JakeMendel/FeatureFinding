@@ -11,7 +11,7 @@ We'd like to study the form of $\phi(n)$ and $L(n)$. Some properties they should
   
   Denote the set of features learned at a low activation number $n$ by $F_n$. 
   
-  Define $\Phi_n: F_n \rightarrow \mathbb{R}^n$ to be a map from features to the vector representation the model finds for these features in the $n$ dimensional activation space. Since the model learns important features first, $F_n \in F_N \: \forall n<N$
+  Define $\Phi_n: F_n \rightarrow \mathbb{R}^n$ to be a map from features to the vector representation the model finds for these features in the $n$ dimensional activation space. Since the model learns important features first, $F_n \in F_N \: \forall n \lt N$
   
   Then we may have that $\forall\epsilon>0, \forall f,g \in F_n, \exists N > n$ s.t. $\Phi_N(f)\cdot\Phi_N(g) < \epsilon$
   This is a useful result if, for any reasonable choice of $n$ and $\epsilon$, the minimum value of $N\ll 2^{d_\text{input}}$.
