@@ -22,10 +22,17 @@ Where does this happen in the nn:
 - For this setup, I want to analyse 1-sparse features only (this is a simplification but may not be a terrible one since features are likely to be v sparse, and Toy Models p14 points out that features go for sparse interference graphs so that there is limited high-order interference). I will also choose my features to be binary: this will make the setup cleaner to analyse, and it may reflect reality better: in real life, features are likely to either be present or not be present in an input. This means that each input is a 1-hot vector, and my entire dataset is just the identity matrix.
 
 ## $A\rightarrow B$
-This is the exact setup introduced in [Toy Models](https://transformer-circuits.pub/2022/toy_model/index.html), with the simplification that they don't use perfect sparsity or binary features. I'll use a ReLU at the end of the model, and MSE.
+This is the exact setup introduced in [Toy Models of Superposition](https://transformer-circuits.pub/2022/toy_model/index.html) (TMS), with the simplification that they don't use perfect sparsity or binary features. I'll use a ReLU at the end of the model, and MSE.
 
 ### Without bias
-- In 2d, models learn a pentagon, as demonstrated in Toy Models
+- In 2d, models learn a pentagon, as demonstrated in TMS. 
+- With GELU, models learn a pentagon that has closer to unit norm and only one feature per direction. Features are also learned faster
+  - *Derivation of no gradient along the feature direction in relu case.*
+  - *Is there anything to say here about why gradients are better in the GELU case?*
+- Why 5 feature directions (maybe a footnote?):
+  - As laid out in TMS, in the 1-sparse case: $$L=\sum_i\left(1-||\mathbf{W}_i||^2\right)^2 + \sum_{j\neq i}\text{ReLU}(\mathbf{W}_i\cdot \mathbf{W}_j)^2$$
+  - Let's assume $||\mathbf{W}_i|| = 1$ and features are uniformly distributed on a circle. Then if we learn $d$ directions, the loss will be $$L=\sum_{r=-\lfloor d/4\rfloor}^{\lfloor d/4\rfloor}\cos^2\left(\frac{2\pi r}{d}\right)$$ This function is minimised (for integer $d$) at $d=5$.
+- Why no pressure to learn 
 
 
 
