@@ -22,11 +22,16 @@ Where does this happen in the NN:
 
 - For this setup, I want to analyse 1-sparse features only (this is a simplification but may not be a terrible one since features are likely to be v sparse, and Toy Models p14 points out that features go for sparse interference graphs so that there is limited high-order interference). I will also choose my features to be binary: this will make the setup cleaner to analyse, and it may reflect reality better: in real life, features are likely to either be present or not be present in an input. This means that each input is a 1-hot vector, and my entire dataset is just the identity matrix.
 
+# The training set
+In the original toy models of superposition paper, the features they input into the model are sparse vectors where each component of the vector is 0 with probability $S$ and otherwise is uniformly distributed between 0 and 1. In this work, I will simplify their training set in two ways.
+1. All the points in my training set will have exactly 1 non-zero component. This allows me to focus on the interference term which is caused by non-zero interference between feature directions, and not on interference terms caused by adding features together. See discussion at bottom why not relevant in low dim case
+
 ## $A\rightarrow B$
 This is the exact setup introduced in [Toy Models of Superposition](https://transformer-circuits.pub/2022/toy_model/index.html) (TMS), with the simplification that they don't use perfect sparsity or binary features. I'll use a ReLU at the end of the model, and MSE.
 
 ### Tied Without bias
 In 2d, models learn a pentagon, as demonstrated in TMS. 
+- With ReLU, there is a lot of degeneracy in the solution, and models learn 
 - With GELU, models learn a pentagon that has closer to unit norm and only one feature per direction. Features are also learned faster
   - *Derivation of no gradient along the feature direction in relu case.*
   - *Is there anything to say here about why gradients are better in the GELU case?*
@@ -80,8 +85,25 @@ Can I encourage the correct algorithm?
 - What happens if I initialise the weights and biases of the NN with pretty much correct values for the function implementation? How close do the values have to be to learn this implementation?
 
 ### What about bias in the hidden layer
+When there is only a bias in the hidden layer and untied, bias goes to zero with relu and gelu. When untied, there is a new d.o.f in the pentagon solution, with the centre of the pentagram allowed to drift away from the origin to coordinates (x,y) with the bias taking on the value (-x,-y). The activations are always centred on zero.
 
-## With Softmax
+Both biases present: 
+Pretty sure there isn't much going on with the hidden biases but not 100% sure. It seems possible that the centre shifts away from zero in that case. 
+
+
+## With Softmax and CrossEntropy
+- Once again, it should be possible for the model to reconstruct all the features perfectly on a circle. The radius of the circle should be large, so that when projected onto a given direction, the probability assigned to each feature is arbitrarily close to one.
+- Empirically, we find that when the matrices are tied, the model learns some number of features by chance on a circle, and sends the others to zero. The optimum circle has evenly spaced features in a circle. With many features, the margin for error is pretty small, and if the learning rate is too high, the model may only be able to put a subset of all features on the circle. Hard to find a setup where all features are learned
+    - Show now that sharing two features in the same direction is disfavoured by softmax unlike MSE.
+- If no bias but untied, now all features are learned. Learn the unembed before the embed:
+    - If a feature $i$ is not memorised in the unembed, then it is assigned very small probability in the reconstruction for all inputs. Suppose it is so near zero that the maximum probability it is assigned is $p_0\sim10^{-8}$. This causes a large contribution (proportional to $-\log (p_0)$) to cross entropy loss when the correct label is $i$. Increasing the magnitude of $(W_U)_i$ so that $p_1\sim10^{-6}$ now causes a significant drop in loss, when the correct label is $i$. While the value of $(W_U)_i$ grows, it causes more interference with other labels which increases the loss associated with those labels, but this increase is typically on the order of $\log(1-10^{-8}) - \log(1-10^{-6})\sim10^{-8}$ which is much less than the decrease in loss due to improved confidence about label $i$.
+    - (kaarel) By contrast, if $(W_E)_i$ and $(W_U)_i$ are small, then increasing $(W_E)_i$ is harmful. This causes all logits to be multiplied by ten when the input is $i$. Since $(W_U)_i$ is small, this means that the final probability assigned to $i$ is reduced even if $(W_E)_i$ and $(W_U)_i$ are in the same direction! But, once $(W_U)_i$ is learned (has similar magnitude to the other rows), then provided that the angle between $(W_E)_i$ and $(W_U)_i$ is smaller than between $(W_E)_i$ and any $(W_U)_{j\neq i}$, increasing the magnitude of $(W_E)_i$ is a good idea.
+    - 
+- If tied and bias, then there is an easier way to get perfect performance than squeezing everything onto a single circle. Learn concentric circles. Larger bias associated with points on smaller circles. This allows us to perfectly distinguish even features in the same direction.
+    - Suppose feature $x_1$ is encoded with the vector $\mathbf{w}_1=w_1 \hat{\mathbf{a}}$ and feature $x_2$ is encoded with $\mathbf{w}_2=w_2\hat{\mathbf{a}}$ with $w_2<w_1$ and $\hat{\mathbf{a}}$ a unit vector. We also have biases $b_1$ and $b_2$ associated with each logit. wlog assume $b_1=0$ and $b_2 = b$ (can add arbitrary uniform amount to each logit without affecting post-softmax probabilities).
+        - If the input is $x_1$, the 1-component of $W^\intercal W x_1$ is $w_1^2$ and the 2-component is $w_1 w_2$.
+        - Similarly, if the input is $x_1$, the 1-component of $W^\intercal W x_2$ is $w_1 w_2$ and the 2-component is $w_2^2$.
+        - We need $w_2 (w_1-w_2) <b< w_1 (w_1-w_2)$ for the highest value logit to be correct in both cases. Since $w_1>w_2$ this is always possible.
 
 - Seed 142, untied
     max_lr = 2
@@ -95,3 +117,9 @@ Can I encourage the correct algorithm?
 
 ## 2-sparse features? Is it necessary?
 A comment about Johnson-Lindenstrauss lemma. Mean interference < epsilon vs max interference < epsilon. Arranging features uniformly on the sphere gets on average interference $\frac{1}{\sqrt{d}}$ compared to $\frac{1}{d}$ if we go for a long tegum product of low dimensional polytopes. But this method only fits a number of features that is linear in the dimension (assuming a fixed size of polytope).
+
+# Why is this analysis useful?
+- (due to arthur) toy models are useful when they well reflect the kind of stuff happening in larger models, and when they are good at this. Toy models could fail to be useful because they are hopeless at a task of interest, or because the task is trivial for them
+    - Understanding more about what tasks are unrealistically easy (like superposition with a hidden layer and softmax) or hard (like  escaping a positive definite Hessian in the tied bias relu mse case?? - need to improve this example) for a toy model is essential for using toy models to improve our understanding of larger models
+- Can we improve our understanding of inductive biases in superposition?
+- Understanding memorisation - how is it that models can approximately store one datapoint per parameter?
