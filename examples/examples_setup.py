@@ -20,6 +20,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 from fancy_einsum import einsum
 from scipy.spatial import ConvexHull
 import os
+from torch.autograd import grad
+
 
 #%%
 mpl.style.use('seaborn-v0_8')
@@ -579,3 +581,41 @@ def relu_minusone(x):
     return F.relu(x-1)
 
 #%%
+
+def pairwise_angles(vectors):
+    n = len(vectors)
+    angles = np.zeros((n, n))
+    
+    for i in range(n):
+        for j in range(n):
+            u = vectors[i]
+            v = vectors[j]
+            cos_angle = np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v))
+            angle = np.arccos(np.clip(cos_angle, -1, 1))  # Clipping to handle potential floating-point errors
+            angles[i, j] = np.degrees(angle)  # Converting to degrees
+            
+    return angles
+
+def calculate_hessian(model, inputs, targets, loss_func):
+    # Compute the loss
+    n = sum(p.numel() for p in model.parameters())
+    if 1000<n:
+        print(f'Warning: this model has {n} parameters. Computing the Hessian take a long time or cause a memory overflow.')
+    output = model(inputs)
+    loss = loss_func(output, targets)
+
+    # Compute the gradient of the loss with respect to the model parameters
+    grad_params = grad(loss, model.parameters(), create_graph=True)
+
+    # Compute the Hessian
+    hessian = []
+    for g in tqdm(grad_params):
+        grad2_params = grad(g, model.parameters(), retain_graph=True)
+        hessian.extend(grad2_params)
+
+    # Calculate the total number of parameters in the model
+
+    # Reshape the Hessian components into a matrix of size (n, n)
+    hessian_matrix = torch.cat([h.reshape(-1) for h in hessian]).reshape(n, n)
+
+    return hessian_matrix
