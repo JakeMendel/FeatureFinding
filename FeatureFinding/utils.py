@@ -1,40 +1,22 @@
 #%%
 import numpy as np
-from scipy.optimize import minimize
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from IPython.display import clear_output
-import time
-import plotly.graph_objs as goa
 import matplotlib as mpl
 import torch.nn.functional as F
 import random
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import copy
 from itertools import combinations
 from torch.optim.lr_scheduler import _LRScheduler
-from fancy_einsum import einsum
 from scipy.spatial import ConvexHull
-import os
 from torch.autograd import grad
-from typing import Dict, Callable, List, Any, Union, Optional, Tuple, Iterable
+from typing import Dict, Callable, List, Optional, Tuple, Iterable
 import plotly.express as px
 import pandas as pd
-
-#%%
-mpl.style.use('seaborn-v0_8')
-mpl.rcParams['figure.figsize'] = (15,10)
-fontsize = 20
-mpl.rcParams['font.size'] = fontsize
-mpl.rcParams['xtick.labelsize'] = fontsize
-mpl.rcParams['ytick.labelsize'] = fontsize
-mpl.rcParams['legend.fontsize'] = fontsize
-mpl.rcParams['axes.titlesize'] = fontsize
-mpl.rcParams['axes.labelsize'] = fontsize
 # %%
 # Create synthetic dataset
 class SyntheticDataset(Dataset):
