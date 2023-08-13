@@ -2,7 +2,7 @@
 
 ## Overview
 
-`FeatureFinding` is a repository dedicated to exploring the structure of feature representations in various toy models. This work is inspired by the toy models of superposition architecture as presented in [Transformer Circuits](https://transformer-circuits.pub/2022/toy_model/index.html).
+`FeatureFinding` is a repository dedicated to exploring the structure of feature representations in various toy models. This work is inspired by the toy models of superposition architecture as presented in [Toy Models of Superposition](https://transformer-circuits.pub/2022/toy_model/index.html).
 
 ## Contents
 
