@@ -335,7 +335,7 @@ def plot_weights_static(weights_history, losses: dict, store_rate=1, dotsize=60,
         fig = plt.figure(figsize=(A4_WIDTH, rows*A4_WIDTH/num_across))
         loss_ax = fig.add_subplot(rows, 1, 1)
         loss_ax.plot(list(losses.keys()), list(losses.values()), '-k', label='Loss')
-        loss_ax.scatter(epochs_to_show, [losses[e] for e in epochs_to_show], color='red', s=round(250*scale), marker='+', label='Selected Epochs')
+        loss_ax.scatter(epochs_to_show, [losses[e] for e in epochs_to_show], color='red', s=round(50*scale), marker='D', label='Selected Epochs')
         loss_ax.set_xlabel('Epoch', fontsize=round(scale*9))
         loss_ax.set_ylabel('Loss', fontsize=round(scale*9))
         loss_ax.legend(fontsize=round(scale*9))
@@ -576,6 +576,25 @@ def np_gelu(matrix):
 def nonlinearity_numpy(matrix, nonlinearity):
     return nonlinearity(torch.tensor(matrix)).detach().numpy()
 
+
+def MLnELoss(n: int)-> Callable:
+    def mean_Ln_norm_error(pred, target):
+        # Calculate element-wise difference
+        assert pred.shape == target.shape, 'pred and target should have same shape!'
+        diff = pred - target
+        
+        # Calculate absolute powered difference
+        abs_powered_diff = torch.abs(diff ** n)
+        
+        # # Sum the absolute powered differences and take the n-th root
+        # Ln_norm = torch.pow(torch.sum(abs_powered_diff, dim=1), 1)
+        
+        # # Calculate the mean of the n-th roots
+        # mean_Ln_norm = torch.mean(Ln_norm)
+        
+        # return mean_Ln_norm
+        return torch.mean(abs_powered_diff)
+    return mean_Ln_norm_error
 
 def filter_to_convex_hull(points):
     # Convert points to numpy array
